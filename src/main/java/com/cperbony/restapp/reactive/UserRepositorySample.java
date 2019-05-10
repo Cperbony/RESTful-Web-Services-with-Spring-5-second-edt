@@ -1,6 +1,7 @@
 package com.cperbony.restapp.reactive;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -20,6 +21,39 @@ public class UserRepositorySample implements UserRepository {
 
     @Override
     public Flux<User> getAllUsers() {
-        return Flux.fromStream(this.users.values().stream());
+        return Flux.fromIterable(this.users.values());
+        // return Flux.fromStream(this.users.values().stream());
     }
+
+    @Override
+    public Mono<User> getUser(Integer id) {
+        return Mono.justOrEmpty(this.users.get(id));
+    }
+
+    @Override
+    public Mono<Void> saveUser(Mono<User> userMono) {
+        return getCreateUpdateUsers(userMono);
+    }
+
+    @Override
+    public Mono<Void> updateUser(Mono<User> userMono) {
+        return getCreateUpdateUsers(userMono);
+    }
+
+
+    private Mono<Void> getCreateUpdateUsers(Mono<User> userMono) {
+        return userMono.doOnNext(user -> {
+            users.put(user.getUserid(), user);
+            System.out.format("Saved %s with id %d%n", user, user.getUserid());
+        }).thenEmpty(Mono.empty());
+    }
+
+
+    @Override
+    public Mono<Void> deleteUser(Integer id) {
+        users.remove(id);
+        System.out.println("user : " + users);
+        return Mono.empty();
+    }
+
 }
